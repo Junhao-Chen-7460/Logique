@@ -3,7 +3,17 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - AND
+  - OR
+  - NAND
+  - NOR
+  - XNOR
+  - NOT
+  - Switch on
+  - Switch off
+  - fan
+  - XOR
   layers:
   - Default
   - TransparentFX
