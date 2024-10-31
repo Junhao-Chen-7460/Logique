@@ -14,6 +14,9 @@ TagManager:
   - Switch off
   - fan
   - XOR
+  - wires
+  - Input collider
+  - Output collider
   layers:
   - Default
   - TransparentFX
