@@ -11,7 +11,7 @@ public class GatesAndSwitches : MonoBehaviour
     public bool output;
     public bool connected = false;
 
-    [SerializeField] GameObject DragCollider;
+    private GameObject DragCollider;
     // Start is called before the first frame update
     void Start()
     {
@@ -38,6 +38,7 @@ public class GatesAndSwitches : MonoBehaviour
         {
             output = !inputA;
         }
+        
         DisplayOutput();
     }
     void OnMouseDown()

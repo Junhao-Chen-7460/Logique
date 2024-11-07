@@ -10,6 +10,13 @@ public class Wires : MonoBehaviour
     private GameObject ends;
     private bool isDrawing = false;
     private bool outputB = false;
+    private struct LineConnection
+    {
+    public LineRenderer line; // 线条
+    public GameObject start;  // 起点 Collider
+    public GameObject end;    // 终点 Collider
+    }
+    private List<LineConnection> lineConnections = new List<LineConnection>();
     // Start is called before the first frame update
     void Start()
     {
@@ -17,7 +24,7 @@ public class Wires : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (Input.GetButtonDown("Fire2"))
         {
@@ -28,27 +35,48 @@ public class Wires : MonoBehaviour
         {
             currentLine.SetPosition(1, GetMouseWorldPos());
         }
+
+        foreach (var connection in lineConnections)
+        {
+            if (connection.line != null && connection.start != null && connection.end != null)
+            {
+                Vector3 startCenter = connection.start.GetComponent<Collider2D>().bounds.center;
+                Vector3 endCenter = connection.end.GetComponent<Collider2D>().bounds.center;
+                connection.line.SetPosition(0, startCenter);
+                connection.line.SetPosition(1, endCenter);
+            }
+        }
     }
 
     private void HandleRightClick()
     {
         RaycastHit2D hit = Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero);
-        
 
         if (hit.collider != null)
         {
             GameObject clickedCollider = hit.collider.gameObject;
 
+            GatesAndSwitches gateScript = clickedCollider.transform.parent?.GetComponent<GatesAndSwitches>();
+
             if (!isDrawing)
             {
-                if (clickedCollider.CompareTag("Input collider") || clickedCollider.CompareTag("Output collider"))
+                if ((clickedCollider.CompareTag("Input collider") || clickedCollider.CompareTag("Output collider")) &&
+                    gateScript != null && !gateScript.connected)
                 {
+                    Debug.Log("Conditions met to start new line.");
                     StartNewLine(clickedCollider);
+                } 
+                else if (gateScript == null) {
+                    Debug.Log("gateScript == null");
+                } 
+                else if (gateScript.connected) {
+                    Debug.Log("gateScript.connected problems");
                 }
             }
             else
             {
-                if (clickedCollider.CompareTag("Input collider") || clickedCollider.CompareTag("Output collider"))
+                if ((clickedCollider.CompareTag("Input collider") || clickedCollider.CompareTag("Output collider")) &&
+                    gateScript != null && !gateScript.connected)
                 {
                     AttemptConnection(clickedCollider);
                 }
@@ -65,11 +93,17 @@ public class Wires : MonoBehaviour
             Destroy(currentLine.gameObject);
             isDrawing = false;
             starts = null;
-            Debug.Log("Canceled line: No collider hit.");
         }
     }
+
     private void StartNewLine(GameObject startPoint)
     {
+        GatesAndSwitches gateScript = startPoint.GetComponent<GatesAndSwitches>();
+        if (gateScript != null && gateScript.connected)
+        {
+            return;
+        }
+
         starts = startPoint;
         isDrawing = true;
 
@@ -80,19 +114,58 @@ public class Wires : MonoBehaviour
         currentLine.positionCount = 2;
         currentLine.SetPosition(0, startCenter);
         currentLine.SetPosition(1, GetMouseWorldPos());
+
+        Debug.Log("Line created and drawing started.");
+
+        
     }
+
     private void AttemptConnection(GameObject endPoint)
     {
         Vector3 endCenter = endPoint.GetComponent<Collider2D>().bounds.center;
+
         if ((starts.CompareTag("Input collider") && endPoint.CompareTag("Output collider")) ||
             (starts.CompareTag("Output collider") && endPoint.CompareTag("Input collider")))
         {
-            ends = endPoint;
-            currentLine.SetPosition(1, endCenter);
-            isDrawing = false;
+            GatesAndSwitches endGateScript = endPoint.transform.parent?.GetComponent<GatesAndSwitches>();
+        GatesAndSwitches startGateScript = starts.transform.parent?.GetComponent<GatesAndSwitches>();
 
-            UpdateLineColor();
-            UpdateInputState();
+            if (endGateScript != null && !endGateScript.connected)
+            {
+                ends = endPoint;
+                currentLine.SetPosition(1, endCenter);
+                isDrawing = false;
+
+                endGateScript.connected = true;
+
+                if (startGateScript != null)
+                {
+                    startGateScript.connected = true;
+                }
+                if (startGateScript != null)
+                {
+                    startGateScript.connected = true;
+                }
+
+                
+                lineConnections.Add(new LineConnection
+                {
+                    line = currentLine,
+                    start = starts,
+                    end = ends
+                });
+
+                UpdateLineColor();
+                UpdateInputState();
+            }
+            else
+            {
+                Debug.Log("End point is already connected, cannot complete the connection.");
+                Destroy(currentLine.gameObject);
+                isDrawing = false;
+                starts = null;
+                ends = null;
+            }
         }
         else
         {
