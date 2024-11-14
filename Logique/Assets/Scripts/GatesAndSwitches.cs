@@ -2,16 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GatesAndSwitches : MonoBehaviour
+public class GatesAndSwitches : MonoBehaviour, IComponentInterface
 {
+
     private bool isDragging = false;
     private Vector3 offset;
-    public bool inputA;
-    public bool inputB;
-    public bool output;
-    public bool connected = false;
+    public bool inputA { get; set; }
+    public bool inputB { get; set; }
+    public bool outputA { get; private set; }
+    public bool outputB { get; private set; }
 
-    private GameObject DragCollider;
+    public Dictionary<Collider2D, bool> colliderConnections = new Dictionary<Collider2D, bool>();
+
     // Start is called before the first frame update
     void Start()
     {
@@ -21,58 +23,78 @@ public class GatesAndSwitches : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (isDragging)
+        HandleDragging();
+        ProcessLogic();
+        DisplayOutput();
+    }
+    private void HandleDragging()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero);
+            if (hit.collider != null && hit.collider.CompareTag("Drag collider") && hit.collider.transform.parent == this.transform)
+            {
+                isDragging = true;
+                offset = transform.position - GetMouseWorldPos();
+            }
+        }
+
+        if (Input.GetMouseButton(0) && isDragging)
         {
             transform.position = GetMouseWorldPos() + offset;
         }
-        string gateType = gameObject.tag;
-        if (gateType == "AND")
+
+        if (Input.GetMouseButtonUp(0))
         {
-            output = inputA && inputB;
+            isDragging = false;
         }
-        else if (gateType == "OR")
-        {
-            output = inputA || inputB;
-        }
-        else if (gateType == "NOT")
-        {
-            output = !inputA;
-        }
-        
-        DisplayOutput();
-    }
-    void OnMouseDown()
-    {
-        if (IsPointerOverDragCollider())
-        {
-            isDragging = true;
-            offset = transform.position - GetMouseWorldPos();
-        }
-    }
-    void OnMouseUp()
-    {
-        isDragging = false;
-    }
-    Vector3 GetMouseWorldPos()
-    {
-        Vector3 mousePoint = Input.mousePosition;
-        mousePoint.z = 0f;
-        return Camera.main.ScreenToWorldPoint(mousePoint);
-    }
-    bool IsPointerOverDragCollider()
-    {
-        RaycastHit2D hit = Physics2D.Raycast(GetMouseWorldPos(), Vector2.zero);
-        if (hit.collider != null && hit.collider.gameObject == DragCollider)
-        {
-            return true;
-        }
-        return false;
     }
 
+    private void ProcessLogic()
+    {
+        switch (tag)
+        {
+            case "AND":
+                outputA = inputA && inputB;
+                break;
+            case "OR":
+                outputA = inputA || inputB;
+                break;
+            case "NOT":
+                outputA = !inputA;
+                break;
+            case "NAND":
+                outputA = !(inputA && inputB);
+                break;
+            case "NOR":
+                outputA = !(inputA || inputB);
+                break;
+            case "XOR":
+                outputA = inputA ^ inputB;
+                break;
+            case "XNOR":
+                outputA = !inputA ^ inputB;
+                break;
+            case "shunt":
+                outputA = inputA;
+                outputB = inputA;
+                break;
+            default:
+                //Debug.LogWarning("Unknown type: " + tag);
+                outputA = false;
+                break;
+        }
+    }
+    private Vector3 GetMouseWorldPos()
+    {
+        Vector3 mousePoint = Input.mousePosition;
+        mousePoint.z = 0; 
+        return Camera.main.ScreenToWorldPoint(mousePoint);
+    }
 
     void DisplayOutput()
     {
-        if (output)
+        if (outputA)
         {
             GetComponent<SpriteRenderer>().color = Color.blue;
         }
@@ -80,6 +102,26 @@ public class GatesAndSwitches : MonoBehaviour
         {
             GetComponent<SpriteRenderer>().color = Color.red;
         }
+    }
+    public bool IsConnected(Collider2D collider)
+    {
+        bool connected = colliderConnections.ContainsKey(collider) && colliderConnections[collider];
+        //Debug.Log($"IsConnected called for {collider.name}: {connected}");
+        return connected;
+    }
+
+    public void SetConnection(Collider2D collider, bool isConnected)
+    {
+        if (colliderConnections.ContainsKey(collider))
+        {
+            colliderConnections[collider] = isConnected;
+
+        }
+        else
+        {
+            colliderConnections.Add(collider, isConnected);
+        }
+        //Debug.Log($"SetConnection called for {collider.name}: {isConnected}");
     }
 
 }

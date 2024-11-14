@@ -10,13 +10,21 @@ TagManager:
   - NOR
   - XNOR
   - NOT
-  - Switch on
-  - Switch off
   - fan
   - XOR
   - wires
-  - Input collider
-  - Output collider
+  - Drag collider
+  - shunt
+  - lights
+  - switch
+  - stick
+  - bulb
+  - Input A
+  - Input B
+  - Output A
+  - Output B
+  - fan leaves
+  - Ports
   layers:
   - Default
   - TransparentFX
