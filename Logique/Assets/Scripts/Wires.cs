@@ -127,11 +127,11 @@ public class Wires : MonoBehaviour
         }
     }
 
-    private bool IsColliderConnected(GameObject collider)
+    public bool IsConnectedTo(GameObject target)
     {
         foreach (var connection in lineConnections)
         {
-            if (connection.start == collider || connection.end == collider)
+            if (connection.end == target)
             {
                 return true;
             }
@@ -141,19 +141,19 @@ public class Wires : MonoBehaviour
 
     private void ClearConnection(GameObject collider)
     {
-        Debug.Log("called");
+        // Debug.Log("called");
         for (int i = lineConnections.Count - 1; i >= 0; i--)
         {
             var connection = lineConnections[i];
-            Debug.Log("Checking connection at index " + i);
+            // Debug.Log("Checking connection at index " + i);
             if (connection.start == collider || connection.end == collider)
             {
-                Debug.Log("Match found for connection with collider: " + collider.name);
+                // Debug.Log("Match found for connection with collider: " + collider.name);
                 Destroy(connection.line.gameObject);
-                Debug.Log("Destroyed line object for connection.");
+                // Debug.Log("Destroyed line object for connection.");
                 IComponentInterface startComponent = connection.start.transform.parent?.GetComponent<IComponentInterface>();
                 IComponentInterface endComponent = connection.end.transform.parent?.GetComponent<IComponentInterface>();
-                Debug.Log("start: " + startComponent + ", end: " + endComponent);
+                // Debug.Log("start: " + startComponent + ", end: " + endComponent);
 
                 if (startComponent != null && (connection.start.CompareTag("Output A") || connection.start.CompareTag("Output B")))
                 {
@@ -175,7 +175,7 @@ public class Wires : MonoBehaviour
                 }
 
                 lineConnections.RemoveAt(i);
-                Debug.Log("Connection cleared for collider: " + collider.name);
+                // Debug.Log("Connection cleared for collider: " + collider.name);
             }
         }
     }

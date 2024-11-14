@@ -23,7 +23,11 @@ public class Specials : MonoBehaviour, IComponentInterface
 
     //bulb
     private GameObject lights;
-    private SpriteRenderer lightRenderer;
+    private bool isBulbInitialized = false;
+
+    //fan
+    private GameObject fanLeaves;
+    private bool isFanInitialized = false;
 
     // Start is called before the first frame update
     void Start()
@@ -32,18 +36,7 @@ public class Specials : MonoBehaviour, IComponentInterface
         {
             FindStick();
         }
-        if (IsBulb())
-        {
-            lights = transform.Find("lights")?.gameObject;
-            if (lights != null)
-            {
-                lightRenderer = lights.GetComponent<SpriteRenderer>();
-                if (lightRenderer != null)
-                {
-                    lightRenderer.enabled = false;
-                }
-            }
-        }
+        
     }
 
     // Update is called once per frame
@@ -52,14 +45,29 @@ public class Specials : MonoBehaviour, IComponentInterface
         HandleDragging();
         HandleRightClickToggle();
 
-        if (IsBulb() && lightRenderer != null)
+        if (IsBulb() && !isBulbInitialized)
         {
-            GameObject portObject = GameObject.FindWithTag("Ports");
-            bool portInputA = portObject != null && portObject.GetComponent<IComponentInterface>()?.inputA == true;
-
-            bool EnableLights = inputA && portInputA;
-            lightRenderer.enabled = EnableLights;
+            FindLights();
+            isBulbInitialized = true;
         }
+
+        if (IsBulb())
+        {
+            UpdateLightsVisibility();
+        }
+
+        if (IsFan() && !isFanInitialized)
+        {
+            FindFanLeaves();
+            isFanInitialized = true;
+        }
+
+        if (IsFan())
+        {
+            UpdateFanRotation();
+        }
+
+        
     }
 
     private bool IsPort()
@@ -72,10 +80,16 @@ public class Specials : MonoBehaviour, IComponentInterface
         return gameObject.CompareTag("bulb");
     }
 
+    private bool IsFan()
+    {
+        return gameObject.CompareTag("fan");
+    }
+
     private bool Switch()
     {
         return gameObject.CompareTag("switch");
     }
+
 
     private void FindStick()
     {
@@ -91,6 +105,31 @@ public class Specials : MonoBehaviour, IComponentInterface
         if (stick == null)
         {
             //Debug.Log("No stick");
+        }
+    }
+
+    private void FindLights()
+    {
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("lights"))
+            {
+                lights = child.gameObject;
+                lights.SetActive(false);
+                break;
+            }
+        }
+    }
+
+    private void FindFanLeaves()
+    {
+        foreach (Transform child in transform)
+        {
+            if (child.CompareTag("fan leaves"))
+            {
+                fanLeaves = child.gameObject;
+                break;
+            }
         }
     }
 
@@ -172,4 +211,56 @@ public class Specials : MonoBehaviour, IComponentInterface
             stick.transform.rotation = initialRotation * Quaternion.Euler(0, 0, 30);
         }
     }
+
+    private void UpdateLightsVisibility()
+    {
+        
+        bool shouldLightBeVisible = inputA && outputA && 
+                                    IsConnectedToPortInputA();
+
+        if (lights != null)
+        {
+            lights.SetActive(shouldLightBeVisible);
+        }
+    }
+
+    private void UpdateFanRotation()
+    {
+        bool shouldFanRotate = inputA && outputA && 
+                               IsConnectedToPortInputA();
+
+        if (fanLeaves != null)
+        {
+            if (shouldFanRotate)
+            {
+                fanLeaves.transform.Rotate(0, 0, -5);
+            }
+        }
+    }
+
+    private bool IsConnectedToPortInputA()
+    {
+        GameObject port = GameObject.FindGameObjectWithTag("Ports");
+        if (port != null)
+        {
+
+            Transform inputA = port.transform.Find("PortIn");
+            if (inputA != null)
+            {
+                
+                IComponentInterface portComponent = port.GetComponent<IComponentInterface>();
+                Collider2D inputACollider = inputA.GetComponent<Collider2D>();
+
+                if (portComponent != null && inputACollider != null)
+                {
+                    return portComponent.inputA && portComponent.IsConnected(inputACollider);
+                } 
+            }
+        }
+        return false;
+    }
 }
+
+
+// when should fan turn: Input A && Output A connected for bulb
+//                      Input A for prot == T Output A for port connected
