@@ -1,13 +1,43 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class Specials : MonoBehaviour, IComponentInterface
 {
-    public bool inputA { get; set; }
+    private bool _inputA;
+    private bool _inputB;
+
+    public event Action SignalUpdated;
+
+    public bool inputA
+    {
+        get => _inputA;
+        set
+        {
+            if (_inputA != value)
+            {
+                _inputA = value;
+                SignalUpdated?.Invoke();
+            }
+        }
+    }
+
+    public bool inputB
+    {
+        get => _inputB;
+        set
+        {
+            if (_inputB != value)
+            {
+                _inputB = value;
+                SignalUpdated?.Invoke();
+            }
+        }
+    }
     public bool outputA => Switch() ? (turnedOn ? inputA : false) 
                          : (IsPort() ? true : inputA);
-    public bool inputB { get; set; }
     public bool outputB => inputA;
 
     private Dictionary<Collider2D, bool> colliderConnections = new Dictionary<Collider2D, bool>();
@@ -147,13 +177,20 @@ public class Specials : MonoBehaviour, IComponentInterface
 
         if (Input.GetMouseButton(0) && isDragging)
         {
-            transform.position = GetMouseWorldPos() + offset;
+            Vector3 position = GetMouseWorldPos() + offset;
+            position = CameraView(position);
+
+            transform.position = position;
         }
 
         if (Input.GetMouseButtonUp(0))
         {
             isDragging = false;
         }
+    }
+    public bool IsDragging()
+    {
+        return isDragging;
     }
     private Vector3 GetMouseWorldPos()
     {
@@ -226,7 +263,7 @@ public class Specials : MonoBehaviour, IComponentInterface
 
     private void UpdateFanRotation()
     {
-        bool shouldFanRotate = inputA && outputA && 
+        bool shouldFanRotate = inputA && outputA &&
                                IsConnectedToPortInputA();
 
         if (fanLeaves != null)
@@ -235,7 +272,9 @@ public class Specials : MonoBehaviour, IComponentInterface
             {
                 fanLeaves.transform.Rotate(0, 0, -5);
             }
+            
         }
+        
     }
 
     private bool IsConnectedToPortInputA()
@@ -259,8 +298,18 @@ public class Specials : MonoBehaviour, IComponentInterface
         }
         return false;
     }
+
+    private Vector3 CameraView(Vector3 Position)
+    {
+        Camera cam = Camera.main;
+        if (cam != null)
+        {
+            Vector3 minWorldPoint = cam.ViewportToWorldPoint(new Vector3(0, 0, transform.position.z - cam.transform.position.z));
+            Vector3 maxWorldPoint = cam.ViewportToWorldPoint(new Vector3(1, 1, transform.position.z - cam.transform.position.z));
+
+            Position.x = Mathf.Clamp(Position.x, minWorldPoint.x, maxWorldPoint.x);
+            Position.y = Mathf.Clamp(Position.y, minWorldPoint.y, maxWorldPoint.y);
+        }
+        return Position;
+    }
 }
-
-
-// when should fan turn: Input A && Output A connected for bulb
-//                      Input A for prot == T Output A for port connected

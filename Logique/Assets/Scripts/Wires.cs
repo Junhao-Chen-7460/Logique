@@ -12,8 +12,8 @@ public class Wires : MonoBehaviour
     private bool isDrawing = false;
     private bool outputB = false;
 
-    private IComponentInterface startComponent;
-    private IComponentInterface endComponent;
+    public IComponentInterface startComponent;
+    public IComponentInterface endComponent;
     private bool isA;
     private bool lastSignal;
 
@@ -56,17 +56,8 @@ public class Wires : MonoBehaviour
             }
         }
 
-        if (startComponent == null)
-        {
-            return;
-        }
-
-        bool currentSignal = GetSignal();
-
-        if (currentSignal != lastSignal)
-        {
-            lastSignal = currentSignal;
-        }
+        // 检查并更新信号状态
+        CheckAndUpdateSignal();
     }
 
 
@@ -212,13 +203,16 @@ public class Wires : MonoBehaviour
 
         if (startGate == null || endGate == null)
         {
-            //Debug.LogWarning("IComponentInterface component not found on either start or end GameObject.");
+            return;
+        }
+
+        if (startGate == endGate)
+        {
             return;
         }
 
         if (startGate.IsConnected(startCollider) || endGate.IsConnected(endCollider))
         {
-            //Debug.LogWarning("One of the colliders is already connected.");
             return;
         }
 
@@ -259,7 +253,7 @@ public class Wires : MonoBehaviour
 
     public void CheckAndUpdateSignal()
     {
-        if (startComponent == null)
+        if (startComponent == null || endComponent == null)
         {
             return;
         }
@@ -269,7 +263,17 @@ public class Wires : MonoBehaviour
         if (currentSignal != lastSignal)
         {
             lastSignal = currentSignal;
+
             UpdateLineColor(currentSignal);
+
+            if (isA)
+            {
+                endComponent.inputA = currentSignal;
+            }
+            else
+            {
+                endComponent.inputB = currentSignal;
+            }
         }
     }
 
@@ -307,45 +311,9 @@ public class Wires : MonoBehaviour
         startComponent = start;
         endComponent = end;
         isA = useA;
-    }
 
-    private void UpdateInputState()
-    {
-        if (starts == null || ends == null)
-        {
-            return;
-        }
-
-        GatesAndSwitches startGate = starts.transform.parent?.GetComponent<GatesAndSwitches>();
-        GatesAndSwitches endGate = ends.transform.parent?.GetComponent<GatesAndSwitches>();
-
-        if (startGate == null || endGate == null)
-        {
-            if (startGate == null)
-            {
-                //Debug.Log("start");
-            }
-            else if (endGate == null)
-            {
-                //Debug.Log("end");
-            }
-            else if (startGate == null && endGate == null)
-            {
-                //Debug.Log("both");
-            }
-            return;
-        }
-
-        if (starts.CompareTag("Output A") || starts.CompareTag("Output B"))
-        {
-            endGate.inputA = startGate.outputA;
-            //Debug.Log("Updated endGate inputA with startGate output: " + startGate.outputA);
-        }
-        else
-        {
-            startGate.inputA = endGate.outputA;
-            //Debug.Log("Updated startGate inputA with endGate output: " + endGate.outputA);
-        }
+        start.SignalUpdated += () => CheckAndUpdateSignal();
+        CheckAndUpdateSignal();
     }
 
     private Vector3 GetMouseWorldPos()
@@ -358,6 +326,36 @@ public class Wires : MonoBehaviour
     private void OnDestroy()
     {
         GameManager.UnregisterWire(this);
+    }
+
+    public void ClearConnectionsRelatedToComponent(IComponentInterface component)
+    {
+        for (int i = lineConnections.Count - 1; i >= 0; i--)
+        {
+            var connection = lineConnections[i];
+
+            if (connection.start.transform.parent.GetComponent<IComponentInterface>() == component ||
+                connection.end.transform.parent.GetComponent<IComponentInterface>() == component)
+            {
+                Destroy(connection.line.gameObject);
+
+                IComponentInterface startComponent = connection.start.transform.parent.GetComponent<IComponentInterface>();
+                if (startComponent != null)
+                {
+                    startComponent.SetConnection(connection.start.GetComponent<Collider2D>(), false);
+                }
+
+                IComponentInterface endComponent = connection.end.transform.parent.GetComponent<IComponentInterface>();
+                if (endComponent != null)
+                {
+                    endComponent.SetConnection(connection.end.GetComponent<Collider2D>(), false);
+                    if (connection.end.CompareTag("Input A")) endComponent.inputA = false;
+                    if (connection.end.CompareTag("Input B")) endComponent.inputB = false;
+                }
+
+                lineConnections.RemoveAt(i);
+            }
+        }
     }
 
 }

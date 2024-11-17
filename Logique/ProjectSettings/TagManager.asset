@@ -25,6 +25,8 @@ TagManager:
   - Output B
   - fan leaves
   - Ports
+  - Edge
+  - Remove Area
   layers:
   - Default
   - TransparentFX
