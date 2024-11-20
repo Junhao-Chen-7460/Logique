@@ -30,7 +30,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject MainMenu;
     [SerializeField] GameObject GameScene;
 
-    [SerializeField] GameObject TutorText;
+    [SerializeField] GameObject InstructionText;
+
+    [SerializeField] GameObject MainInstructionText;
+    [SerializeField] GameObject MainTutorText;
+    [SerializeField] GameObject MainGoalText;
+    [SerializeField] GameObject SubMenu;
+    [SerializeField] GameObject Header;
 
     [SerializeField] GameObject RestartButton;
     [SerializeField] GameObject MainMenuButton;
@@ -38,17 +44,17 @@ public class GameManager : MonoBehaviour
     [SerializeField] GameObject HideTutorButton;
     [SerializeField] GameObject ShowPlaceButton;
     [SerializeField] GameObject HidePlaceButton;
-    [SerializeField] GameObject PlaceANDButton;
-    [SerializeField] GameObject PlaceNOTButton;
-    [SerializeField] GameObject PlaceORButton;
-    [SerializeField] GameObject PlaceNANDButton;
-    [SerializeField] GameObject PlaceNORButton;
-    [SerializeField] GameObject PlaceXNORButton;
-    [SerializeField] GameObject PlaceXORButton;
-    [SerializeField] GameObject PlaceSwitchButton;
-    [SerializeField] GameObject PlaceBulbButton;
-    [SerializeField] GameObject PlaceFanButton;
-    [SerializeField] GameObject PlaceShuntButton;
+    //[SerializeField] GameObject PlaceANDButton;
+    //[SerializeField] GameObject PlaceNOTButton;
+    //[SerializeField] GameObject PlaceORButton;
+    //[SerializeField] GameObject PlaceNANDButton;
+    //[SerializeField] GameObject PlaceNORButton;
+    //[SerializeField] GameObject PlaceXNORButton;
+    //[SerializeField] GameObject PlaceXORButton;
+    //[SerializeField] GameObject PlaceSwitchButton;
+    //[SerializeField] GameObject PlaceBulbButton;
+    //[SerializeField] GameObject PlaceFanButton;
+    //[SerializeField] GameObject PlaceShuntButton;
     
 
     [SerializeField] GameObject ANDPrefab;
@@ -424,9 +430,41 @@ public class GameManager : MonoBehaviour
 
         return false;
     }
-    public void SeeTutor()
+    public void ShowSubTutors()
     {
-        TutorText.SetActive(!TutorText.activeInHierarchy);
+        SubMenu.SetActive(!SubMenu.activeInHierarchy);
+    }
+    public void SeeMainTutor()
+    {
+        MainTutorText.SetActive(!MainTutorText.activeInHierarchy);
+        if (!Header.activeInHierarchy) 
+        {
+            Header.SetActive(true);
+        }
+        MainInstructionText.SetActive(false);
+        MainGoalText.SetActive(false);
+    }
+    public void SeeMainInstruction()
+    {
+        MainInstructionText.SetActive(!MainInstructionText.activeInHierarchy);
+        Header.SetActive(!Header.activeInHierarchy);
+        MainGoalText.SetActive(false);
+        MainTutorText.SetActive(false);
+    }
+    public void SeeMainGoal()
+    {
+        MainGoalText.SetActive(!MainGoalText.activeInHierarchy);
+        MainInstructionText.SetActive(false);
+        MainTutorText.SetActive(false);
+        if (!Header.activeInHierarchy)
+        {
+            Header.SetActive(true);
+        }
+    }
+
+    public void SeeInstruction()
+    {
+        InstructionText.SetActive(!InstructionText.activeInHierarchy);
     }
     public void StartPlay()
     {
